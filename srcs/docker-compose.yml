@@ -1,0 +1,118 @@
+version: '3.8'
+
+services:
+
+  # MANDATORY ####################################
+
+  mariadb:
+    image: mariadb:inception
+    container_name: mariadb
+    build: ./requirements/mariadb
+    env_file: .env
+    networks:
+      - inception
+    volumes:
+      - database:/var/lib/mysql
+    restart: always
+
+  nginx:
+    image: nginx:inception
+    container_name: nginx
+    build: ./requirements/nginx
+    env_file: .env
+    networks:
+      - inception
+    volumes:
+      - public:/var/www/public
+    ports:
+      - 443:443
+    restart: always
+
+  wordpress:
+    image: wordpress:inception
+    container_name: wordpress
+    build: ./requirements/wordpress
+    env_file: .env
+    networks:
+      - inception
+    volumes:
+      - public:/var/www/public
+    depends_on:
+      - mariadb
+      - redis
+    restart: always
+
+  # BONUS ########################################
+
+  adminer:
+    image: adminer:inception
+    container_name: adminer
+    build: ./requirements/bonus/adminer
+    env_file: .env
+    networks:
+      - inception
+    restart: always
+  
+  filebrowser:
+    image: filebrowser:inception
+    container_name: filebrowser
+    build: ./requirements/bonus/filebrowser
+    env_file: .env
+    networks:
+      - inception
+    volumes:
+      - public:/var/www/public
+    restart: always
+  
+  redis:
+    image: redis:inception
+    container_name: redis
+    build: ./requirements/bonus/redis
+    env_file: .env
+    networks:
+      - inception
+    restart: always
+  
+  vsftpd:
+    image: vsftpd:inception
+    container_name: vsftpd
+    build: ./requirements/bonus/vsftpd
+    env_file: .env
+    networks:
+      - inception
+    volumes:
+      - public:/var/www/public
+    ports:
+      - 20-21:20-21
+      - 21100-21105:21100-21105
+    restart: always
+
+  website:
+    image: website:inception
+    container_name: website
+    build: ./requirements/bonus/website
+    env_file: .env
+    networks:
+      - inception
+    restart: always
+  
+volumes:
+
+  database:
+    driver: local
+    driver_opts:
+      device: ${HOME}/data/database
+      type: none
+      o: bind
+
+  public:
+    driver: local
+    driver_opts:
+      device: ${HOME}/data/public
+      type: none
+      o: bind
+
+networks:
+
+  inception:
+    name: inception
